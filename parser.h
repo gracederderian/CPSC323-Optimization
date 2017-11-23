@@ -1,9 +1,9 @@
-/* REUSING FOR PROJECT 3 / MODIFYING
+/* REUSING FOR PROJECT 4 / MODIFYING
 Brian Cabantug
 Grace Derderian
-Program #3
+Program #4
 CPSC 323-85
-Oct 30 2017
+Dec 1 2017
 Compilers used: Visual Studio 2013 (Visual C++ 12.0)
 XCode (g++ Version 5.4)
 Tested using both IDE and command line
@@ -59,7 +59,7 @@ string Term(ifstream&, LexTok&); //
 string Factor(ifstream&, LexTok&); //
 
 
- //parser function that starts the top down recursion for grammar rules that takes in the file
+								   //parser function that starts the top down recursion for grammar rules that takes in the file
 void parser(ifstream &file) {
 	//calls the first lexeme/token combo in the file
 	LexTok curToken = lexer(file);
@@ -139,14 +139,14 @@ void Program(ifstream& file, LexTok& token) {
 		else {
 			if (it->back() != ':' && it->compare(".text") != 0) {
 				cout << "\t" << *it << endl;
-				
+
 			}
 			else {
 				cout << *it << endl;
 			}
-			
+
 		}
-		
+
 	}
 
 }
@@ -187,6 +187,9 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 	//boolean for checking if declaration errors are present
 	bool error = false;
 
+
+	
+
 	//Call Type function, assigns the type to t
 	t = Type(file, token);
 
@@ -205,6 +208,9 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 		//check if the var being declared has already been declared
 		if (list.empty() == true) { //if the list that checks if the vars is empty
 			list.push_back(d); //add the var to the list
+
+			
+
 		}
 		else { //otherwise, iterate through the vector to check if there is a duplicate present
 			for (vector<string>::iterator il = list.begin(); il != list.end(); il++) {
@@ -220,6 +226,8 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 		}
 		else { //otherwise, add the var to the list for checking
 			list.push_back(d);
+
+			
 		}
 
 		//sets the rest of the declaration of the variable
@@ -229,6 +237,14 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 
 		//saves it in the decl vector to pass back
 		decl.push_back(d);
+
+		//assign var to register (project 4 part 1)
+		for (int i = 0; i < 10; i++) { //iterates through the register list
+			if (tRegister[i].compare("") == 0) { //first register that is empty
+				tRegister[i] = d; //assigns the var to the register
+				break; //breaks out of the loop
+			}
+		}
 
 	}
 
@@ -366,7 +382,20 @@ void Assign(ifstream& file, LexTok& token) {
 	if (token.token.compare("Identifier") == 0)
 	{
 		//gets the identifier
-		ident = token.lexeme;
+		//ident = token.lexeme;
+
+		//check the identifier and assign the register instead
+		for (int i = 0; i < 10; i++) {
+			//if the identifier is found in the register
+			if (token.lexeme.compare(tRegister[i]) == 0) {
+				//assign the register
+				ident = "$t" + to_string(i);
+
+				//break out of the loop
+				break;
+
+			}
+		}
 
 		token = lexer(file);
 	}
@@ -377,7 +406,9 @@ void Assign(ifstream& file, LexTok& token) {
 	//call Expr function, and gets the register
 	reg = Expr(file, token);
 	//completes the command and passes it to the assemblyCommands vector
-	assemblyCommands.push_back("sw " + reg + ", " + ident);
+	//assemblyCommands.push_back("sw " + reg + ", " + ident);
+	assemblyCommands.push_back("move " + ident + ", " + reg + "");
+
 
 	//clear register after storing value back into the variable
 	int rNum = reg[2] - '0';
@@ -709,6 +740,11 @@ string Expr(ifstream& file, LexTok& token) {
 	string r1 = "";
 	string r2 = "";
 
+	//the next empty register to store the value into
+	string r3 = "";
+
+
+
 	//Call Term function, set rregister 1
 	r1 = Term(file, token);
 
@@ -721,10 +757,21 @@ string Expr(ifstream& file, LexTok& token) {
 			//call the factor if it is factor
 			r2 = Term(file, token);
 
+			//assigns the 3rd register as the next empty register to move the calculated value to
+			for (int i = 0; i < 10; i++) {
+				
+				if (tRegister[i].compare("") == 0) {
+					//assign it as the register to use for assignment
+					r3 = "$t" + to_string(i);
+					tRegister[i] = r1 + " + " + r2;
+					break;
+				}
+			}
+
 			//gets add command
-			assemblyCommands.push_back("add " + r1 + ", " + r1 + ", " + r2);
+			assemblyCommands.push_back("add " + r3 + ", " + r1 + ", " + r2);
 			//clears the register that is unused after calc
-			int mo = r2[2] - '0';
+			int mo = r3[2] - '0';
 			tRegister[mo] = "";
 
 		}
@@ -735,10 +782,22 @@ string Expr(ifstream& file, LexTok& token) {
 			//call the factor if it is factor
 			r2 = Term(file, token);
 
+			//assigns the 3rd register as the next empty register to move the calculated value to
+			for (int i = 0; i < 10; i++) {
+
+				if (tRegister[i].compare("") == 0) {
+					//assign it as the register to use for assignment
+					r3 = "$t" + to_string(i);
+					tRegister[i] = r1 + " + " + r2;
+					break;
+				}
+			}
+
+
 			//gets sub command
-			assemblyCommands.push_back("sub " + r1 + ", " + r1 + ", " + r2);
+			assemblyCommands.push_back("sub " + r3 + ", " + r1 + ", " + r2);
 			//clears the register that is unused after calc
-			int mo = r2[2] - '0';
+			int mo = r3[2] - '0';
 			tRegister[mo] = "";
 		}
 
@@ -754,6 +813,7 @@ string Term(ifstream& file, LexTok& token) {
 	string r1 = "";
 	string r2 = "";
 
+	string r3 = "";
 
 	//Call Factor function
 	r1 = Factor(file, token);
@@ -769,9 +829,24 @@ string Term(ifstream& file, LexTok& token) {
 
 			//call the factor if it is factor
 			r2 = Factor(file, token);
+
+			//assigns the 3rd register as the next empty register to move the calculated value to
+			for (int i = 0; i < 10; i++) {
+
+				if (tRegister[i].compare("") == 0) {
+					//assign it as the register to use for assignment
+					r3 = "$t" + to_string(i);
+					tRegister[i] = r1 + " + " + r2;
+					break;
+				}
+			}
+
+
 			//set commands
 			assemblyCommands.push_back("mult " + r1 + ", " + r2);
-			assemblyCommands.push_back("mflo " + r1);
+
+
+			assemblyCommands.push_back("mflo " + r3);
 			//clear unused register after use
 			int mo = r2[2] - '0';
 
@@ -785,9 +860,21 @@ string Term(ifstream& file, LexTok& token) {
 
 			//call the factor if it is factor
 			r2 = Factor(file, token);
+
+			//assigns the 3rd register as the next empty register to move the calculated value to
+			for (int i = 0; i < 10; i++) {
+
+				if (tRegister[i].compare("") == 0) {
+					//assign it as the register to use for assignment
+					r3 = "$t" + to_string(i);
+					tRegister[i] = r1 + " + " + r2;
+					break;
+				}
+			}
+
 			//set commands
 			assemblyCommands.push_back("div " + r1 + ", " + r2);
-			assemblyCommands.push_back("mflo " + r1);
+			assemblyCommands.push_back("mflo " + r3);
 			//clear unused register after use
 			int mo = r2[2] - '0';
 			tRegister[mo] = "";
@@ -808,7 +895,7 @@ string Factor(ifstream& file, LexTok& token) {
 	string reg = "$t";
 	string in = "";
 
-	//Check if identifier, intConst, realConst, strConst
+	//Check if identifier, , realConst, strConst
 	if (token.token.compare("Identifier") == 0)
 	{
 		in = token.lexeme;
@@ -832,7 +919,7 @@ string Factor(ifstream& file, LexTok& token) {
 
 		//consume token
 		token = lexer(file);
-		
+
 		for (int i = 0; i < 10; i++) {
 			//if the temp register is empty/not used yet
 			if (tRegister[i].compare("") == 0) {
@@ -841,13 +928,14 @@ string Factor(ifstream& file, LexTok& token) {
 				tRegister[i] = in;
 				break;
 			}
-
 		}
+
 		//push back the load
-		assemblyCommands.push_back("lw " + reg + ", " + in);
+		//assemblyCommands.push_back("lw " + reg + ", " + in);
 
 
 	}
+	//check if intConst
 	else if (token.token.compare("IntConst") == 0)
 	{
 		in = token.lexeme;
