@@ -59,7 +59,7 @@ string Term(ifstream&, LexTok&); //
 string Factor(ifstream&, LexTok&); //
 
 
-								   //parser function that starts the top down recursion for grammar rules that takes in the file
+//parser function that starts the top down recursion for grammar rules that takes in the file
 void parser(ifstream &file) {
 	//calls the first lexeme/token combo in the file
 	LexTok curToken = lexer(file);
@@ -187,8 +187,9 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 	//boolean for checking if declaration errors are present
 	bool error = false;
 
+	string varName = "";
 
-	
+
 
 	//Call Type function, assigns the type to t
 	t = Type(file, token);
@@ -209,7 +210,7 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 		if (list.empty() == true) { //if the list that checks if the vars is empty
 			list.push_back(d); //add the var to the list
 
-			
+
 
 		}
 		else { //otherwise, iterate through the vector to check if there is a duplicate present
@@ -227,7 +228,7 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 		else { //otherwise, add the var to the list for checking
 			list.push_back(d);
 
-			
+			varName = d;
 		}
 
 		//sets the rest of the declaration of the variable
@@ -241,7 +242,7 @@ vector<string> Decl(ifstream& file, LexTok& token) {
 		//assign var to register (project 4 part 1)
 		for (int i = 0; i < 10; i++) { //iterates through the register list
 			if (tRegister[i].compare("") == 0) { //first register that is empty
-				tRegister[i] = d; //assigns the var to the register
+				tRegister[i] = varName; //assigns the var to the register
 				break; //breaks out of the loop
 			}
 		}
@@ -300,7 +301,7 @@ vector<string> VarList(ifstream& file, LexTok& token) {
 		}
 	}//loop again if there is a comma following the identifier
 
-	 //return the vector
+	//return the vector
 	return ident;
 }
 
@@ -415,6 +416,23 @@ void Assign(ifstream& file, LexTok& token) {
 	tRegister[rNum] = "";
 
 	expect(";", token, file);
+
+	for (int i = 0; i < 10; i++){
+		//boolean to check if register used in conditional is part of the declared list
+		bool declared = false;
+		//iterates throuhg the list of declared variables to see if it keeps 
+		for (vector<string>::iterator it = list.begin(); it != list.end(); it++) {
+			if ((*it).compare(tRegister[i]) == 0) {
+				declared = true; //if found bool is true and breaks
+				break;
+			}
+		} //if not in the declared list, clears the register instead
+		if (declared == false){
+			
+			tRegister[i] = "";
+		}
+
+	}
 }
 
 //BRIAN
@@ -681,11 +699,34 @@ string Cond(ifstream& file, LexTok& token) {
 	cond = relo + " " + r1 + ", " + r2 + ", ";
 
 	//clears the registers used in the conditional to free up for the following function
-	int mo = r1[2] - '0';
-	tRegister[mo] = "";
+	
+	//boolean to check if register used in conditional is part of the declared list
+	bool declared = false;
+	//iterates throuhg the list of declared variables to see if it keeps 
+	for (vector<string>::iterator it = list.begin(); it != list.end(); it++) {
+		if ((*it).compare(tRegister[r1[2]-'0']) == 0) {
+			declared = true; //if found bool is true and breaks
+			break;
+		}
+	} //if not in the declared list, clears the register instead
+	if (declared == false){
+		int mo = r1[2] - '0';
+		tRegister[mo] = "";
+	}
+	
+	declared = false;
 
-	mo = r2[2] - '0';
-	tRegister[mo] = "";
+	for (vector<string>::iterator it = list.begin(); it != list.end(); it++) {
+		if ((*it).compare(tRegister[r2[2] - '0']) == 0) {
+			declared = true; //if found bool is true and breaks
+			break;
+		}
+	} //if not in the declared list, clears the register instead
+	if (declared == false){
+		int mo = r2[2] - '0';
+		tRegister[mo] = "";
+	}
+	/////
 
 	//return the statement
 	return cond;
@@ -759,7 +800,7 @@ string Expr(ifstream& file, LexTok& token) {
 
 			//assigns the 3rd register as the next empty register to move the calculated value to
 			for (int i = 0; i < 10; i++) {
-				
+
 				if (tRegister[i].compare("") == 0) {
 					//assign it as the register to use for assignment
 					r3 = "$t" + to_string(i);
@@ -771,8 +812,8 @@ string Expr(ifstream& file, LexTok& token) {
 			//gets add command
 			assemblyCommands.push_back("add " + r3 + ", " + r1 + ", " + r2);
 			//clears the register that is unused after calc
-			int mo = r3[2] - '0';
-			tRegister[mo] = "";
+			/*int mo = r3[2] - '0';
+			tRegister[mo] = "";*/
 
 		}
 		else if (token.lexeme.compare("-") == 0) {
@@ -797,10 +838,12 @@ string Expr(ifstream& file, LexTok& token) {
 			//gets sub command
 			assemblyCommands.push_back("sub " + r3 + ", " + r1 + ", " + r2);
 			//clears the register that is unused after calc
-			int mo = r3[2] - '0';
-			tRegister[mo] = "";
+			/*int mo = r3[2] - '0';
+			tRegister[mo] = "";*/
 		}
 
+		//returns the value of r3 after calculation to store into the variable
+		return r3;
 
 	}
 
@@ -926,6 +969,11 @@ string Factor(ifstream& file, LexTok& token) {
 				//assign it as the register to use for assignment
 				reg = reg + to_string(i);
 				tRegister[i] = in;
+				break;
+			}
+			else if (tRegister[i].compare(in) == 0){
+				reg = reg + to_string(i);
+				//tRegister[i] = in;
 				break;
 			}
 		}
