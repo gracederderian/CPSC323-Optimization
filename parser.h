@@ -891,9 +891,12 @@ string Term(ifstream& file, LexTok& token) {
 
 			assemblyCommands.push_back("mflo " + r3);
 			//clear unused register after use
-			int mo = r2[2] - '0';
+			/*int mo = r2[2] - '0';
 
-			tRegister[mo] = "";
+			tRegister[mo] = "";*/
+
+			//returns the register the value was stored
+			return r3;
 		}
 		//divide
 		else if (token.lexeme.compare("/") == 0) {
@@ -917,10 +920,33 @@ string Term(ifstream& file, LexTok& token) {
 
 			//set commands
 			assemblyCommands.push_back("div " + r1 + ", " + r2);
-			assemblyCommands.push_back("mflo " + r3);
+
+			//check if either is a variable register use to move value to the temp one
+			
+			//boolean to check if register used in conditional is part of the declared list
+			bool check = false;
+			//iterates throuhg the list of declared variables to see if it keeps 
+			for (vector<string>::iterator it = list.begin(); it != list.end(); it++) {
+				if ((*it).compare(tRegister[r1[2] - '0']) == 0 || (*it).compare(tRegister[r2[2] - '0']) == 0) {
+					check = true;
+				}
+			} //if not in the declared list, returns mflo as r1 or r2(need to implement) /////TEST TEST
+
+			if (check == false){
+				assemblyCommands.push_back("mflo " + r1);
+				//testing
+				return r1;
+			}
+			else{
+				assemblyCommands.push_back("mflo " + r3);
+
+			}
 			//clear unused register after use
-			int mo = r2[2] - '0';
-			tRegister[mo] = "";
+			/*int mo = r2[2] - '0';
+			tRegister[mo] = "";*/
+
+			//returns the register the value was stored
+			return r3;
 		}
 
 	}
