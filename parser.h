@@ -486,7 +486,7 @@ void Read(ifstream& file, LexTok& token) {
 			}
 		}
 		if (reg == true){
-			assemblyCommands.push_back("move " + regist + ",$a0");
+			assemblyCommands.push_back("move " + regist + ",$v0");
 		}
 		else{
 			cout << "error" << endl;
