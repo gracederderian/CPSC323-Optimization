@@ -473,7 +473,24 @@ void Read(ifstream& file, LexTok& token) {
 	for (vector<string>::iterator it = idents.begin(); it != idents.end(); it++) {
 		assemblyCommands.push_back("li $v0, 5");
 		assemblyCommands.push_back("syscall");
-		assemblyCommands.push_back("sw $v0, " + *it);
+		//assemblyCommands.push_back("sw $v0, " + *it);
+
+		//finds the register number that needs to be assigned to move the value
+		bool reg = false;
+		string regist = "$t";
+		for (int i = 0; i < 10; i++){
+			if (tRegister[i].compare(*it) == 0){
+				reg = true;
+				regist += to_string(i);
+				break;
+			}
+		}
+		if (reg == true){
+			assemblyCommands.push_back("move " + regist + ",$a0");
+		}
+		else{
+			cout << "error" << endl;
+		}
 	}
 
 	expect(")", token, file);
@@ -551,7 +568,7 @@ void If(ifstream& file, LexTok& token) {
 	//ifOrder.push_back("");
 
 	expect("begin", token, file);
-
+	 
 	//cals StmtList function
 	StmtList(file, token);
 
